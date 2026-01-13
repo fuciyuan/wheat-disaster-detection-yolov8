@@ -1,0 +1,2 @@
+[console_scripts]
+wheat-detection = main:main

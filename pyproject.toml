@@ -1,0 +1,25 @@
+[project]
+name = "wheat-disaster-detection-yolov8"
+version = "0.1.0"
+description = "A wheat disaster recognition system based on YOLOv8 for detecting and classifying various wheat diseases and damages"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "ultralytics==8.2.0",
+    "opencv-python>=4.8.0",
+    "numpy>=1.26.0",
+    "pillow>=10.0.0",
+    "matplotlib>=3.8.0",
+    "pandas>=2.1.0"
+]
+
+[project.scripts]
+wheat-detection = "main:main"
+
+[build-system]
+requires = ["setuptools>=68.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = { find = { where = ["src"] } }
+include-package-data = true

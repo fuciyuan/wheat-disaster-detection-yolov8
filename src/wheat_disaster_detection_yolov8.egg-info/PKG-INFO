@@ -1,0 +1,136 @@
+Metadata-Version: 2.4
+Name: wheat-disaster-detection-yolov8
+Version: 0.1.0
+Summary: A wheat disaster recognition system based on YOLOv8 for detecting and classifying various wheat diseases and damages
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: ultralytics==8.2.0
+Requires-Dist: opencv-python>=4.8.0
+Requires-Dist: numpy>=1.26.0
+Requires-Dist: pillow>=10.0.0
+Requires-Dist: matplotlib>=3.8.0
+Requires-Dist: pandas>=2.1.0
+
+# 小麦灾害检测系统
+
+## 项目简介
+
+基于YOLOv8的小麦灾害检测系统，用于检测和分类小麦病害和虫害，包括：
+
+- **小麦锈病 (Wheat Rust)**
+- **白粉病 (Powdery Mildew)**
+- **叶斑病 (Leaf Spot)**
+- **蚜虫危害 (Aphid Damage)**
+- **健康小麦 (Healthy)**
+
+## 技术栈
+
+- **框架**: YOLOv8 (Ultralytics)
+- **语言**: Python 3.10+
+- **图像处理**: OpenCV, NumPy, Pillow
+- **可视化**: Matplotlib
+- **数据处理**: Pandas
+- **依赖管理**: uv (Ultra-fast Python package manager)
+
+## 项目结构
+
+```
+wheat-disaster-detection-yolov8/
+├── models/              # 存放YOLOv8模型文件
+├── data/                # 数据集相关文件
+├── utils/               # 工具函数模块
+├── tests/               # 测试脚本
+├── docs/                # 项目文档
+├── config/              # 配置文件
+├── main.py              # 主程序入口
+├── pyproject.toml       # 项目依赖配置
+├── README.md            # 项目说明文档
+└── 开题报告.pdf         # 项目开题报告
+```
+
+## 快速开始
+
+### 1. 环境配置
+
+使用uv安装依赖：
+
+```bash
+uv pip install .
+```
+
+或者：
+
+```bash
+uv pip install ultralytics opencv-python numpy pillow matplotlib pandas
+```
+
+### 2. 模型下载
+
+将YOLOv8模型文件下载到 `models/` 目录：
+
+```bash
+wget -P models/ https://github.com/ultralytics/assets/releases/download/v8.2.0/yolov8n.pt
+```
+
+### 3. 运行检测
+
+#### 单张图像检测
+
+```bash
+python main.py detect --image path/to/your/image.jpg
+```
+
+#### 视频检测（待实现）
+
+```bash
+python main.py detect --video path/to/your/video.mp4
+```
+
+#### 实时摄像头检测（待实现）
+
+```bash
+python main.py detect --camera
+```
+
+### 4. 模型训练
+
+```bash
+python main.py train --data data/wheat_disaster.yaml --epochs 100
+```
+
+## 数据集结构
+
+推荐的数据集结构：
+
+```
+data/wheat_disaster_dataset/
+├── images/
+│   ├── train/       # 训练集图像
+│   ├── val/         # 验证集图像
+│   └── test/        # 测试集图像
+├── labels/
+│   ├── train/       # 训练集标签
+│   ├── val/         # 验证集标签
+│   └── test/        # 测试集标签
+└── wheat_disaster.yaml  # 数据集配置文件
+```
+
+## 配置文件
+
+配置文件位于 `config/config.yaml`，包含：
+
+- 模型参数：模型路径、输入尺寸、置信度阈值等
+- 训练参数：训练轮数、批次大小、学习率等
+- 数据集参数：数据集路径、类别信息等
+
+## 贡献
+
+欢迎提交Issue和Pull Request！
+
+## 许可证
+
+本项目采用 MIT 许可证。
+
+## 联系方式
+
+如有问题，请联系项目团队。
