@@ -2,268 +2,603 @@
 
 ## 1. 环境配置
 
-### Q: 如何安装uv包管理器？
+### 1.1 如何安装 uv？
 
-A: 在Windows上，可以通过以下命令安装uv：
+在 Windows 系统上，可以通过以下命令安装 uv：
+
 ```bash
 powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
 ```
 
-### Q: 运行uv sync时出现网络问题怎么办？
+在 Linux/macOS 系统上，可以通过以下命令安装 uv：
 
-A: 可以尝试使用国内镜像：
 ```bash
-uv pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+### 1.2 如何安装项目依赖？
+
+```bash
 uv sync
 ```
 
-### Q: 如何验证安装是否成功？
+### 1.3 如何创建虚拟环境？
 
-A: 运行测试脚本：
 ```bash
-python test.py
+uv venv
 ```
 
-如果安装成功，会显示：
-```
-小麦灾害检测系统初始化成功！
-```
+### 1.4 如何激活虚拟环境？
 
-### Q: 如何检查Python版本？
+在 Windows 系统上，激活虚拟环境：
 
-A: 使用命令：
 ```bash
-python --version
+uv venv
+.venv\Scripts\activate
 ```
 
-推荐使用Python 3.10或更高版本。
+在 Linux/macOS 系统上，激活虚拟环境：
+
+```bash
+uv venv
+source .venv/bin/activate
+```
+
+### 1.5 如何更新项目依赖？
+
+```bash
+uv add ultralytics==8.2.0
+```
+
+### 1.6 如何安装特定版本的 PyTorch？
+
+```bash
+uv add torch==2.3.0
+```
+
+### 1.7 如何安装支持 CUDA 的 PyTorch？
+
+```bash
+uv add torch==2.3.0+cu118 -i https://download.pytorch.org/whl/cu118
+uv add torchvision==0.18.0+cu118 -i https://download.pytorch.org/whl/cu118
+```
 
 ## 2. 模型训练
 
-### Q: 训练过程中遇到`CUDA out of memory`怎么办？
+### 2.1 如何开始训练模型？
 
-A: 解决方法：
-1. 减小batch size：从16减小到8或4
-2. 减小输入图像尺寸：从640减小到416或320
-3. 使用更小的模型：从yolov8s切换到yolov8n
-4. 启用FP16：在训练命令中添加 `--half` 参数
-
-### Q: 训练损失不下降怎么办？
-
-A: 可能原因及解决方法：
-- 学习率不合适：尝试减小或增大学习率（lr0）
-- 数据质量问题：检查数据标注是否正确
-- 数据集过小：增加训练样本
-- 模型过大：尝试使用更小的模型
-
-### Q: 模型过拟合怎么办？
-
-A: 解决方法：
-1. 增加数据增强：调整mosaic、mixup等参数
-2. 减小模型规模：使用更小的模型
-3. 提前停止训练：在验证集性能下降时停止
-4. 添加正则化：增大weight_decay值
-
-### Q: 训练集和验证集准确率差异大怎么办？
-
-A: 这可能是过拟合的表现。解决方法：
-- 增加数据增强
-- 减小模型复杂度
-- 使用Dropout层
-- 提前停止训练
-
-### Q: 如何在CPU上训练模型？
-
-A: 使用 `--device cpu` 参数：
 ```bash
-python src/main.py train --data data/wheat_disaster.yaml --epochs 100 --device cpu
+uv run python src/main.py train --data src/data/wheat_disaster.yaml --epochs 100
 ```
+
+### 2.2 如何恢复训练？
+
+```bash
+uv run python src/main.py train --resume runs/train/exp/weights/last.pt
+```
+
+### 2.3 如何进行模型微调？
+
+```bash
+uv run python src/main.py train --data src/data/wheat_disaster.yaml --epochs 50 --weights yolov8m.pt
+```
+
+### 2.4 如何调整批次大小？
+
+```bash
+uv run python src/main.py train --data src/data/wheat_disaster.yaml --epochs 100 --batch 32
+```
+
+### 2.5 如何调整学习率？
+
+```bash
+uv run python src/main.py train --data src/data/wheat_disaster.yaml --epochs 100 --lr0 0.001
+```
+
+### 2.6 如何训练更大的模型？
+
+```bash
+uv run python src/main.py train --data src/data/wheat_disaster.yaml --epochs 200 --weights yolov8m.pt
+```
+
+### 2.7 如何使用 TensorBoard？
+
+```bash
+uv run tensorboard --logdir runs/train
+```
+
+### 2.8 如何使用 Weights & Biases？
+
+1. 安装 W&B：
+
+```bash
+pip install wandb
+```
+
+2. 登录 W&B：
+
+```bash
+wandb login
+```
+
+3. 训练时添加 `--wandb` 参数：
+
+```bash
+uv run python src/main.py train --data src/data/wheat_disaster.yaml --epochs 100 --wandb
+```
+
+### 2.9 如何停止训练？
+
+在命令行中按下 `Ctrl+C` 可以停止训练。
 
 ## 3. 模型检测
 
-### Q: 运行检测时没有显示结果？
+### 3.1 如何进行单张图像检测？
 
-A: 检查步骤：
-1. 确认输入图像路径正确
-2. 检查置信度阈值是否设置过低
-3. 确认模型文件存在
-4. 检查是否有权限读取图像文件
-
-### Q: 检测结果边界框不准确？
-
-A: 解决方法：
-1. 增加训练轮数
-2. 调整置信度阈值
-3. 优化数据标注
-4. 使用更大的模型
-
-### Q: 如何批量检测多张图像？
-
-A: 使用 `--images` 参数：
 ```bash
-python src/main.py detect --images data/test/images
+uv run python src/main.py detect --image test.jpg
 ```
 
-### Q: 如何保存检测结果？
+### 3.2 如何进行批量检测？
 
-A: 使用 `--save` 参数：
 ```bash
-python src/main.py detect --image test.jpg --save
+uv run python src/main.py detect --images ./data/test/images
 ```
 
-## 4. 数据集相关
+### 3.3 如何进行视频检测？
 
-### Q: 数据集如何组织？
-
-A: 数据集需要按照以下结构：
-```
-data/
-├── wheat_disaster.yaml
-├── train/
-│   ├── images/
-│   └── labels/
-├── val/
-│   ├── images/
-│   └── labels/
-└── test/
-    ├── images/
-    └── labels/
+```bash
+uv run python src/main.py detect --video test.mp4
 ```
 
-### Q: 标签文件格式如何？
+### 3.4 如何进行实时摄像头检测？
 
-A: 使用YOLO格式：
-- 每个目标一行
-- 格式：`class_id x_center y_center width height`
-- 坐标已归一化到0-1之间
+```bash
+uv run python src/main.py detect --camera
+```
 
-### Q: 如何将COCO格式转换为YOLO格式？
+### 3.5 如何调整检测阈值？
 
-A: 使用ultralytics提供的工具：
+```bash
+uv run python src/main.py detect --image test.jpg --conf 0.5
+```
+
+### 3.6 如何保存检测结果？
+
+```bash
+uv run python src/main.py detect --image test.jpg --save
+```
+
+### 3.7 如何修改模型路径？
+
+```bash
+uv run python src/main.py detect --image test.jpg --model runs/train/exp/weights/best.pt
+```
+
+### 3.8 如何使用半精度推理？
+
+```bash
+uv run python src/main.py detect --image test.jpg --half
+```
+
+### 3.9 如何使用 GPU 加速？
+
+确保安装了 CUDA 和 PyTorch，可以通过以下命令检查：
+
+```bash
+uv run python -c "import torch; print(torch.cuda.is_available())"
+```
+
+如果返回 True，则表示支持 GPU 加速。
+
+## 4. 数据集
+
+### 4.1 如何准备数据集？
+
+数据集应该按照 YOLO 格式组织：
+
+```
+data/wheat_disaster_dataset/
+├── images/
+│   ├── train/          # 训练集图像
+│   ├── val/            # 验证集图像
+│   └── test/           # 测试集图像
+└── labels/
+    ├── train/          # 训练集标签文件
+    ├── val/            # 验证集标签文件
+    └── test/           # 测试集标签文件
+```
+
+### 4.2 如何标注数据集？
+
+可以使用以下工具进行标注：
+
+- [LabelImg](https://github.com/tzutalin/labelImg)
+- [LabelBox](https://labelbox.com/)
+- [CVAT](https://github.com/opencv/cvat)
+
+### 4.3 数据集标签格式是什么？
+
+每个标签文件包含如下格式：
+
+```
+class_id x_center y_center width height
+```
+
+例如：
+```
+0 0.1 0.2 0.3 0.4
+1 0.5 0.6 0.7 0.8
+```
+
+### 4.4 如何划分训练集和验证集？
+
+建议的划分比例：
+
+- 训练集: 70%
+- 验证集: 20%
+- 测试集: 10%
+
+可以使用 Python 脚本自动划分数据集：
+
 ```python
-from ultralytics.data.converter import convert_coco
-convert_coco('path/to/coco/annotations', 'path/to/output')
+import os
+import shutil
+import random
+
+input_dir = './data/wheat_disaster_dataset'
+output_dir = './data/wheat_disaster_dataset_split'
+
+os.makedirs(os.path.join(output_dir, 'images', 'train'), exist_ok=True)
+os.makedirs(os.path.join(output_dir, 'images', 'val'), exist_ok=True)
+os.makedirs(os.path.join(output_dir, 'images', 'test'), exist_ok=True)
+os.makedirs(os.path.join(output_dir, 'labels', 'train'), exist_ok=True)
+os.makedirs(os.path.join(output_dir, 'labels', 'val'), exist_ok=True)
+os.makedirs(os.path.join(output_dir, 'labels', 'test'), exist_ok=True)
+
+image_files = os.listdir(os.path.join(input_dir, 'images'))
+random.shuffle(image_files)
+
+train_files = image_files[:int(0.7 * len(image_files))]
+val_files = image_files[int(0.7 * len(image_files)):int(0.9 * len(image_files))]
+test_files = image_files[int(0.9 * len(image_files)):]
+
+for file in train_files:
+    shutil.copy(os.path.join(input_dir, 'images', file), os.path.join(output_dir, 'images', 'train', file))
+    label_file = file.replace('.jpg', '.txt')
+    if os.path.exists(os.path.join(input_dir, 'labels', label_file)):
+        shutil.copy(os.path.join(input_dir, 'labels', label_file), os.path.join(output_dir, 'labels', 'train', label_file))
+
+for file in val_files:
+    shutil.copy(os.path.join(input_dir, 'images', file), os.path.join(output_dir, 'images', 'val', file))
+    label_file = file.replace('.jpg', '.txt')
+    if os.path.exists(os.path.join(input_dir, 'labels', label_file)):
+        shutil.copy(os.path.join(input_dir, 'labels', label_file), os.path.join(output_dir, 'labels', 'val', label_file))
+
+for file in test_files:
+    shutil.copy(os.path.join(input_dir, 'images', file), os.path.join(output_dir, 'images', 'test', file))
+    label_file = file.replace('.jpg', '.txt')
+    if os.path.exists(os.path.join(input_dir, 'labels', label_file)):
+        shutil.copy(os.path.join(input_dir, 'labels', label_file), os.path.join(output_dir, 'labels', 'test', label_file))
+
+print('数据集划分完成。')
 ```
 
-### Q: 如何处理数据集不平衡？
+### 4.5 如何解决类别不平衡问题？
 
-A: 解决方法：
-1. 数据采样：过采样或欠采样
-2. 类别加权：训练时设置不同的类别权重
-3. 数据增强：为少数类别添加更多增强
+类别不平衡会影响模型性能，可以通过以下方式解决：
+
+1. 调整损失函数
+2. 使用 Focal Loss
+3. 增加少数类别的数据
+4. 使用数据增强
+
+### 4.6 如何提高数据集质量？
+
+可以通过以下方式提高数据集质量：
+
+1. 删除模糊或损坏的图像
+2. 修正错误的标签
+3. 增加更多的样本
+4. 增加多样性
 
 ## 5. 性能优化
 
-### Q: 如何提高模型检测速度？
+### 5.1 如何提高推理速度？
 
-A: 优化方法：
-1. 使用更小的模型：yolov8n
-2. 减小输入图像尺寸：416或320
-3. 启用FP16半精度推理
-4. 量化模型到INT8
-5. 使用TensorRT加速
+可以通过以下方式提高推理速度：
 
-### Q: 如何提高模型精度？
+1. 使用更小的模型
+2. 减小输入图像尺寸
+3. 使用半精度或 INT8 量化
+4. 使用 TensorRT 加速
 
-A: 优化方法：
-1. 使用更大的模型：yolov8s, yolov8m
-2. 增大输入图像尺寸：800或1024
-3. 增加训练轮数
-4. 优化数据集
-5. 使用数据增强
+### 5.2 如何提高模型精度？
 
-### Q: 如何加速推理？
+可以通过以下方式提高模型精度：
 
-A: 加速方法：
-- ONNX Runtime
-- TensorRT
-- OpenVINO
-- CoreML
-- TensorFlow Lite
+1. 增加训练轮数
+2. 调整学习率
+3. 使用更大的模型
+4. 增加更多的数据
+5. 增加数据增强
+
+### 5.3 如何避免过拟合？
+
+可以通过以下方式避免过拟合：
+
+1. 增加数据量
+2. 使用数据增强
+3. 使用正则化
+4. 提前停止训练
+
+### 5.4 如何提高训练速度？
+
+可以通过以下方式提高训练速度：
+
+1. 使用 GPU 加速
+2. 增加批次大小
+3. 使用更大的 batch
+4. 使用更快的数据加载器
+
+### 5.5 如何使用 TensorRT 加速模型？
+
+1. 导出模型为 ONNX 格式：
+
+```bash
+uv run python src/main.py export --weights best.pt --format onnx
+```
+
+2. 使用 TensorRT 进行优化：
+
+```python
+import tensorrt as trt
+
+# 加载 ONNX 模型
+builder = trt.Builder(trt.Logger())
+network = builder.create_network(1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH))
+parser = trt.OnnxParser(network, builder.logger)
+with open('best.onnx', 'rb') as model:
+    if not parser.parse(model.read()):
+        for error in range(parser.num_errors):
+            print(parser.get_error(error))
+
+# 构建引擎
+build_config = builder.create_builder_config()
+build_config.max_workspace_size = 1 << 30
+engine = builder.build_engine(network, build_config)
+```
+
+### 5.6 如何使用半精度训练？
+
+```bash
+uv run python src/main.py train --data src/data/wheat_disaster.yaml --half
+```
+
+### 5.7 如何使用 INT8 量化？
+
+```bash
+uv run python src/main.py export --weights best.pt --format engine --int8
+```
+
+### 5.8 如何使用模型蒸馏？
+
+可以通过模型蒸馏提高模型性能：
+
+```python
+from ultralytics import YOLO
+import torch
+
+# 加载教师模型
+teacher_model = YOLO('yolov8x.pt')
+# 加载学生模型
+student_model = YOLO('yolov8n.pt')
+
+# 模型蒸馏代码
+def distill(teacher_model, student_model, data, epochs):
+    for epoch in range(epochs):
+        # 训练学生模型
+        student_model.train(data=data, epochs=1, teacher_model=teacher_model)
+
+distill(teacher_model, student_model, 'src/data/wheat_disaster.yaml', 100)
+```
 
 ## 6. 模型导出
 
-### Q: 如何导出模型为ONNX格式？
+### 6.1 如何导出为 ONNX？
 
-A: 使用export命令：
 ```bash
-python src/main.py export --weights runs/train/exp/weights/best.pt --format onnx
+uv run python src/main.py export --weights best.pt --format onnx
 ```
 
-### Q: 如何导出模型为TensorRT格式？
+### 6.2 如何导出为 TensorRT？
 
-A: 使用export命令：
 ```bash
-python src/main.py export --weights runs/train/exp/weights/best.pt --format engine
+uv run python src/main.py export --weights best.pt --format engine
 ```
 
-### Q: 如何在C++中使用模型？
+### 6.3 如何导出为 CoreML？
 
-A: 需要将模型导出为ONNX或TensorRT格式，然后在C++代码中使用相应的推理引擎。
-
-### Q: 如何在移动设备上部署？
-
-A: 导出为CoreML或TensorFlow Lite格式：
 ```bash
-python src/main.py export --weights runs/train/exp/weights/best.pt --format coreml
+uv run python src/main.py export --weights best.pt --format coreml
+```
+
+### 6.4 如何导出为 TensorFlow Lite？
+
+```bash
+uv run python src/main.py export --weights best.pt --format tflite
+```
+
+### 6.5 如何导出为 Pytorch？
+
+```bash
+uv run python src/main.py export --weights best.pt --format torchscript
+```
+
+### 6.6 如何导出为 ONNX 并简化？
+
+```bash
+uv run python src/main.py export --weights best.pt --format onnx --simplify
+```
+
+### 6.7 如何导出为动态批量 ONNX？
+
+```bash
+uv run python src/main.py export --weights best.pt --format onnx --dynamic
+```
+
+### 6.8 如何导出为 TensorRT 并优化？
+
+```bash
+uv run python src/main.py export --weights best.pt --format engine --workspace 8
+```
+
+### 6.9 如何导出为 PyTorch 并量化？
+
+```bash
+uv run python src/main.py export --weights best.pt --format torchscript --int8
+```
+
+### 6.10 如何使用导出的模型？
+
+```python
+from ultralytics import YOLO
+
+model = YOLO('best.onnx')
+results = model('test.jpg')
+results.save()
 ```
 
 ## 7. 常见错误
 
-### Q: 运行时出现 `AttributeError: 'list' object has no attribute 'boxes'`？
+### 7.1 FileNotFoundError
 
-A: 这通常是因为模型返回了多个结果。需要遍历结果列表：
-
-```python
-results = model(img)
-for result in results:
-    if result.boxes:
-        # 处理检测结果
+```
+FileNotFoundError: [Errno 2] No such file or directory: 'test.jpg'
 ```
 
-### Q: 运行时出现 `ModuleNotFoundError: No module named 'ultralytics'`？
+解决方法：
 
-A: 需要安装ultralytics：
+- 检查文件路径是否正确
+- 确保文件存在
+
+### 7.2 ImportError
+
+```
+ImportError: No module named 'ultralytics'
+```
+
+解决方法：
+
+- 安装 ultralytics
+
 ```bash
-uv pip install ultralytics
+uv add ultralytics==8.2.0
 ```
 
-### Q: 运行时出现 `FileNotFoundError: models/yolov8n.pt`？
+### 7.3 RuntimeError
 
-A: 解决方法：
-1. 确保模型文件存在
-2. 使用自动下载：
-```python
-from ultralytics import YOLO
-YOLO('yolov8n.pt')
+```
+RuntimeError: CUDA out of memory.
 ```
 
-### Q: 运行时出现 `RuntimeError: CUDA error: out of memory`？
+解决方法：
 
-A: 解决方法：
-1. 减小batch size
-2. 减小输入尺寸
-3. 使用更小的模型
+- 减小批次大小
+- 减小输入图像尺寸
+- 使用更小的模型
+- 使用半精度训练
 
-### Q: 运行时出现 `ValueError: Expected 1 or more classes in dataset`？
+### 7.4 TypeError
 
-A: 检查数据集中是否有标签文件，以及yaml配置文件是否正确。
-
-### Q: 运行时出现 `AttributeError: 'str' object has no attribute 'shape'`？
-
-A: 可能是传递了字符串路径给模型，而不是图像数组。需要先读取图像：
-
-```python
-import cv2
-img = cv2.imread('test.jpg')
-results = model(img)
 ```
+TypeError: unsupported operand type(s) for +: 'NoneType' and 'str'
+```
+
+解决方法：
+
+- 检查变量是否为 None
+- 确保输入参数正确
+
+### 7.5 KeyError
+
+```
+KeyError: 'model'
+```
+
+解决方法：
+
+- 检查配置文件
+- 确保包含 'model' 键
+
+### 7.6 AttributeError
+
+```
+AttributeError: 'NoneType' object has no attribute 'detect'
+```
+
+解决方法：
+
+- 确保模型已成功加载
+- 检查模型路径是否正确
+
+### 7.7 ValueError
+
+```
+ValueError: unsupported value: [None, None, None, None, None]
+```
+
+解决方法：
+
+- 检查输入图像是否为空
+- 确保输入图像路径正确
+
+### 7.8 MemoryError
+
+```
+MemoryError: could not allocate memory
+```
+
+解决方法：
+
+- 减小批次大小
+- 减小输入图像尺寸
+- 使用更小的模型
+
+### 7.9 OSError
+
+```
+OSError: [WinError 123] 文件名、目录名或卷标语法不正确
+```
+
+解决方法：
+
+- 检查文件路径是否正确
+- 确保不包含特殊字符
+
+### 7.10 TypeError
+
+```
+TypeError: detect() missing 1 required positional argument: 'image_path'
+```
+
+解决方法：
+
+- 检查函数参数
+- 确保所有参数正确
 
 ## 8. 部署相关
 
-### Q: 如何在Flask中部署模型？
+### 8.1 如何部署到服务器？
 
-A: 示例Flask服务：
+可以通过以下方式部署模型：
+
+1. 使用 Flask
+2. 使用 FastAPI
+3. 使用 Django
+
+以下是 Flask 部署示例：
+
 ```python
 from flask import Flask, request, jsonify
 import cv2
@@ -284,115 +619,88 @@ if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
 ```
 
-### Q: 如何在Docker中部署？
+### 8.2 如何部署到移动设备？
 
-A: 创建Dockerfile：
-```
-FROM python:3.10-slim
+可以通过以下方式部署到移动设备：
+
+1. 使用 CoreML
+2. 使用 TensorFlow Lite
+
+### 8.3 如何部署到边缘设备？
+
+可以通过以下方式部署到边缘设备：
+
+1. 使用 TensorRT
+2. 使用 OpenVINO
+3. 使用 TensorFlow Lite
+
+### 8.4 如何使用 Docker 部署？
+
+```dockerfile
+FROM python:3.11-slim
+
 WORKDIR /app
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+
 COPY . .
-CMD ["python", "src/main.py"]
+
+RUN pip install uv
+RUN uv sync
+
+EXPOSE 5000
+
+CMD ["uv", "run", "python", "app.py"]
 ```
 
-### Q: 如何在Jetson Nano上部署？
+### 8.5 如何使用 Kubernetes 部署？
 
-A: 需要安装JetPack SDK，然后按照以下步骤：
-1. 安装ultralytics
-2. 转换模型为TensorRT格式
-3. 使用TensorRT进行推理
-
-## 9. 其他问题
-
-### Q: YOLOv8支持哪些Python版本？
-
-A: YOLOv8支持Python 3.8及以上版本。
-
-### Q: 如何更新ultralytics库？
-
-A: 使用以下命令：
-```bash
-uv pip install -U ultralytics
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wheat-detection
+  labels:
+    app: wheat-detection
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: wheat-detection
+  template:
+    metadata:
+      labels:
+        app: wheat-detection
+    spec:
+      containers:
+      - name: wheat-detection
+        image: wheat-detection:latest
+        ports:
+        - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: wheat-detection-service
+spec:
+  type: LoadBalancer
+  selector:
+    app: wheat-detection
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
 ```
 
-### Q: 如何在Colab中使用YOLOv8？
+## 9. 下一步
 
-A: 在Colab中执行以下命令：
-```bash
-!pip install ultralytics
-!git clone https://github.com/ultralytics/ultralytics.git
-```
+- 阅读 [快速开始](quick-start.md) 了解基本使用方法
+- 阅读 [训练指南](training.md) 了解更多训练技巧
+- 阅读 [API 文档](api.md) 了解更多接口
+- 阅读 [配置说明](configuration.md) 了解更多配置选项
+- 阅读 [数据集结构](dataset-structure.md) 了解更多数据集信息
 
-### Q: 如何处理视频流？
+## 10. 联系方式
 
-A: 使用VideoCapture类处理视频：
-```python
-import cv2
-from ultralytics import YOLO
+如有任何问题，可以通过以下方式联系我们：
 
-model = YOLO('yolov8n.pt')
-cap = cv2.VideoCapture('video.mp4')
-while cap.isOpened():
-    ret, frame = cap.read()
-    if not ret:
-        break
-    results = model(frame)
-    cv2.imshow('frame', results[0].plot())
-    if cv2.waitKey(1) == ord('q'):
-        break
-cap.release()
-cv2.destroyAllWindows()
-```
-
-### Q: 如何在摄像头实时检测？
-
-A: 使用命令：
-```bash
-python src/main.py detect --camera
-```
-
-## 10. 性能比较
-
-### Q: YOLOv8各模型大小比较
-
-| 模型 | 参数 | 速度 | 精度 | 适用场景 |
-| --- | --- | --- | --- | --- |
-| yolov8n | 3.2M | 最快 | 低 | 边缘设备，实时应用 |
-| yolov8s | 11.2M | 快 | 较高 | 大多数场景 |
-| yolov8m | 25.9M | 中等 | 高 | 精度优先 |
-| yolov8l | 43.7M | 慢 | 很高 | 高要求场景 |
-| yolov8x | 68.2M | 最慢 | 最高 | 极致精度 |
-
-## 11. 常见数据集格式
-
-### Q: COCO格式
-
-A: COCO格式使用JSON文件存储标注，每个目标包含：
-- 类别ID
-- 边界框
-- 分割点
-
-### Q: Pascal VOC格式
-
-A: Pascal VOC格式使用XML文件存储标注，每个文件对应一张图像。
-
-### Q: YOLO格式
-
-A: YOLO格式使用TXT文件存储标注，每个目标一行。
-
-## 12. 参考资料
-
-- [YOLOv8官方文档](https://docs.ultralytics.com/)
-- [ultralytics GitHub](https://github.com/ultralytics/ultralytics)
-- [YOLOv8教程](https://docs.ultralytics.com/guides/)
-- [YOLOv8论文](https://arxiv.org/abs/2305.07926)
-
-## 13. 更多帮助
-
-如果您的问题未在此文档中找到解答，可以通过以下方式获取帮助：
-
-1. **GitHub Issues**：在项目仓库提交Issue
-2. **社区论坛**：访问ultralytics的Discord和GitHub讨论区
-3. **官方文档**：[ultralytics官方文档](https://docs.ultralytics.com/)
-4. **教程**：查看GitHub上的相关教程和示例
+- 项目地址: [https://github.com/syster-0/wheat-disaster-detection-yolov8](https://github.com/syster-0/wheat-disaster-detection-yolov8)
+- 问题反馈: [GitHub Issues](https://github.com/syster-0/wheat-disaster-detection-yolov8/issues)
