@@ -1,0 +1,25 @@
+# YOLOv8模型配置文件
+# 小麦灾害检测项目专用配置
+
+# 模型配置
+model:
+  name: "yolov8n.pt"  # 使用的YOLOv8模型类型
+  imgsz: 640         # 输入图像尺寸
+  conf: 0.25         # 置信度阈值
+  iou: 0.45          # IOU阈值
+
+# 训练配置
+training:
+  epochs: 100        # 训练轮数
+  batch_size: 16     # 批次大小
+  lr0: 0.01          # 初始学习率
+  save_dir: "runs/train"  # 训练结果保存目录
+
+# 数据集配置
+dataset:
+  path: "data/wheat_disaster_dataset"  # 数据集路径
+  train: "images/train"  # 训练集图像路径
+  val: "images/val"      # 验证集图像路径
+  test: "images/test"    # 测试集图像路径
+  nc: 5                 # 类别数量
+  names: ["wheat_rust", "powdery_mildew", "leaf_spot", "aphid_damage", "healthy"]  # 类别名称
